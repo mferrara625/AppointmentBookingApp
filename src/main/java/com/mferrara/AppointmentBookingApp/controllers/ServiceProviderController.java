@@ -42,6 +42,14 @@ public class ServiceProviderController {
             provider.setTitle(update.getTitle());
         if(update.getClients() != null)
             provider.setClients(update.getClients());
+        if(update.getStartTime() != null)
+            provider.setStartTime(update.getStartTime());
+        if(update.getHoursOpen() != null)
+            provider.setHoursOpen(update.getHoursOpen());
+        if(update.getTimeSlotsPerHour() != null)
+            provider.setTimeSlotsPerHour(update.getTimeSlotsPerHour());
+        if(update.getDaysOff() != null)
+            provider.setDaysOff(update.getDaysOff());
 
         return providerRepository.save(provider);
     }

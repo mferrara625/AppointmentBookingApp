@@ -45,8 +45,6 @@ public class ClientController {
             client.setEmail(update.getEmail());
         if(update.getPhoneNumber() != null)
             client.setPhoneNumber(update.getPhoneNumber());
-        if(update.getServiceProviders() != null)
-            client.setServiceProviders(update.getServiceProviders());
 
         return clientRepository.save(client);
     }

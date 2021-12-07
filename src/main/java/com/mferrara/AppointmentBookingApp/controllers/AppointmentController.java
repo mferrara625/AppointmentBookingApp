@@ -1,14 +1,17 @@
 package com.mferrara.AppointmentBookingApp.controllers;
 
 import com.mferrara.AppointmentBookingApp.models.Appointment;
+import com.mferrara.AppointmentBookingApp.models.Service;
 import com.mferrara.AppointmentBookingApp.models.ServiceProvider;
 import com.mferrara.AppointmentBookingApp.repositories.AppointmentRepository;
 import com.mferrara.AppointmentBookingApp.repositories.ServiceProviderRepository;
+import com.mferrara.AppointmentBookingApp.repositories.ServiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
@@ -24,14 +27,28 @@ public class AppointmentController {
     @Autowired
     private ServiceProviderRepository providerRepository;
 
+    @Autowired
+    private ServiceRepository serviceRepository;
+
     @PostMapping
     public Appointment createAppointment(@RequestBody Appointment newAppointment){
         ServiceProvider provider = providerRepository.findById(newAppointment.getProvider().getId()).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND)); ;
-        for(Appointment appts : provider.getAppointments())
-        if(appts.getTime().isEqual((newAppointment.getTime()))){
-            System.out.println("TEST = TRUE");
+//        for(Appointment appts : provider.getAppointments())
+//        if(appts.getStartTime().isEqual((newAppointment.getStartTime()))){
+//            System.out.println("TEST = TRUE");
+//        }
+        Appointment appointment = newAppointment;
+        Service service = serviceRepository.findById(appointment.getService().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        int hour = 0;
+        int time = service.getLengthInMinutes();
+        while( time >= 60){
+            hour += 1;
+            time -= 60;
         }
-        return appointmentRepository.save(newAppointment);
+        appointment.setEndTime(appointment.getStartTime().plusHours(hour));
+        appointment.setEndTime(appointment.getEndTime().plusMinutes(time));
+
+        return appointmentRepository.save(appointment);
     }
 
     @GetMapping
@@ -43,8 +60,6 @@ public class AppointmentController {
     public List<LocalDateTime> viewSchedule(@PathVariable Long providerId, @RequestParam(defaultValue = "0" ) int monthId) {
         ServiceProvider provider = providerRepository.findById(providerId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         List<LocalDateTime> result = new ArrayList<>();
-        int startTime = 9; //TODO: add startTime and hoursOpen to Provider class (&& List<Day> daysOff )
-        int hoursOpen = 8; // TODO: ^^^^see above^^^^^^
         Month month;
         int year;
         if(monthId == 0)
@@ -57,21 +72,22 @@ public class AppointmentController {
             year = LocalDateTime.now().getYear();
 
         for (int day = 1; day <= month.maxLength(); day++) {
-            int hour = startTime - 1;
-            for (int i = 0; i < hoursOpen * 2; i++) {
-                int min;
-                if (i % 2 == 0) {
-                    min = 0;
-                    hour++;
-                } else min = 30;
-                LocalDateTime dateTime = LocalDateTime.of(year, month, day, hour, min);
-                if(!result.contains(dateTime)){
-                    result.add(dateTime);
+            int hour = provider.getStartTime();
+            for (int i = 0; i < provider.getHoursOpen(); i++) {
+                for(int j = 0; j < provider.getTimeSlotsPerHour(); j++){
+                    LocalDateTime dateTime = LocalDateTime.of(year, month, day, i + hour , j*(60/provider.getTimeSlotsPerHour()));
+                    if(!result.contains(dateTime)){
+                        result.add(dateTime);
+                    }
                 }
                 for(Appointment appts : provider.getAppointments()){
-                    result.remove(appts.getTime());
+                    result.remove(appts.getStartTime());
+                    if(appts.getStartTime() != null && appts.getEndTime() != null)
+                    result.removeIf(localDateTime -> (localDateTime.isAfter(appts.getStartTime()) && localDateTime.isBefore(appts.getEndTime())));
                 }
                 result.removeIf(localDateTime -> localDateTime.isBefore(LocalDateTime.now()));
+                for(DayOfWeek dow : provider.getDaysOff())
+                result.removeIf(localDateTime -> localDateTime.getDayOfWeek().equals(dow));
             }
         }
 
@@ -86,12 +102,30 @@ public class AppointmentController {
     @PutMapping("/{id}")
     public Appointment updateAppointment(@PathVariable Long id, @RequestBody Appointment update){
         Appointment appointment = appointmentRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if(update.getDescription() != null)
-            appointment.setDescription(update.getDescription());
+        if(update.getNotes() != null)
+            appointment.setNotes(update.getNotes());
         if(update.getClient() != null)
             appointment.setClient(update.getClient());
         if(update.getProvider() != null)
             appointment.setProvider(update.getProvider());
+        if(update.getStartTime() != null)
+            appointment.setStartTime(update.getStartTime());
+        if(update.getService() != null)
+            appointment.setService(update.getService());
+
+        if(update.getEndTime() != null)
+            appointment.setEndTime(update.getEndTime());
+        else{
+            Service service = serviceRepository.findById(appointment.getService().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            int hour = 0;
+            int time = service.getLengthInMinutes();
+            while( time >= 60){
+                hour += 1;
+                time -= 60;
+            }
+            appointment.setEndTime(appointment.getStartTime().plusHours(hour));
+            appointment.setEndTime(appointment.getEndTime().plusMinutes(time));
+        }
 
         return appointmentRepository.save(appointment);
     }

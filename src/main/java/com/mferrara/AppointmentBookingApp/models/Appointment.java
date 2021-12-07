@@ -16,8 +16,11 @@ public class Appointment {
     @Id
     @GeneratedValue
     private Long id;
-    private String description;
-    private LocalDateTime time;
+    private String notes;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    @OneToOne
+    private Service service;
     @ManyToOne
     @JoinColumn(name = "serviceProvider_id", referencedColumnName = "id")
     private ServiceProvider provider;
@@ -27,9 +30,11 @@ public class Appointment {
 
     public Appointment(){}
 
-    public Appointment(String description, LocalDateTime time, ServiceProvider provider, Client client) {
-        this.description = description;
-        this.time = time;
+    public Appointment(String notes, LocalDateTime startTime, LocalDateTime endTime, Service service, ServiceProvider provider, Client client) {
+        this.notes = notes;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.service = service;
         this.provider = provider;
         this.client = client;
     }
@@ -42,20 +47,32 @@ public class Appointment {
         this.id = id;
     }
 
-    public String getDescription() {
-        return description;
+    public String getNotes() {
+        return notes;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
-    public LocalDateTime getTime() {
-        return time;
+    public LocalDateTime getStartTime() {
+        return startTime;
     }
 
-    public void setTime(LocalDateTime time) {
-        this.time = time;
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() { return endTime; }
+
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+
+    public Service getService() {
+        return service;
+    }
+
+    public void setService(Service service) {
+        this.service = service;
     }
 
     public ServiceProvider getProvider() {

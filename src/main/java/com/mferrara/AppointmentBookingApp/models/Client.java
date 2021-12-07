@@ -21,13 +21,7 @@ public class Client {
     private String lastName;
     private String email;
     private String phoneNumber;
-    @ManyToMany
-    @JoinTable(
-            name = "serviceProvider_client",
-            joinColumns = @JoinColumn(name = "serviceProvider_id"),
-            inverseJoinColumns = @JoinColumn(name = "client_id")
-    )
-    private Set<ServiceProvider> serviceProviders;
+
     @OneToMany
     @JoinColumn(name = "client_id", referencedColumnName = "id")
     private List<Appointment> appointments;
@@ -81,14 +75,6 @@ public class Client {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
-    }
-
-    public Set<ServiceProvider> getServiceProviders() {
-        return serviceProviders;
-    }
-
-    public void setServiceProviders(Set<ServiceProvider> serviceProviders) {
-        this.serviceProviders = serviceProviders;
     }
 
     public List<Appointment> getAppointments() {
