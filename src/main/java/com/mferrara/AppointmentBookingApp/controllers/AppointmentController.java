@@ -37,18 +37,17 @@ public class AppointmentController {
 //        if(appts.getStartTime().isEqual((newAppointment.getStartTime()))){
 //            System.out.println("TEST = TRUE");
 //        }
-        Appointment appointment = newAppointment;
-        Service service = serviceRepository.findById(appointment.getService().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Service service = serviceRepository.findById(newAppointment.getService().getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         int hour = 0;
         int time = service.getLengthInMinutes();
         while( time >= 60){
             hour += 1;
             time -= 60;
         }
-        appointment.setEndTime(appointment.getStartTime().plusHours(hour));
-        appointment.setEndTime(appointment.getEndTime().plusMinutes(time));
+        newAppointment.setEndTime(newAppointment.getStartTime().plusHours(hour));
+        newAppointment.setEndTime(newAppointment.getEndTime().plusMinutes(time));
 
-        return appointmentRepository.save(appointment);
+        return appointmentRepository.save(newAppointment);
     }
 
     @GetMapping
@@ -80,10 +79,10 @@ public class AppointmentController {
                         result.add(dateTime);
                     }
                 }
-                for(Appointment appts : provider.getAppointments()){
-                    result.remove(appts.getStartTime());
-                    if(appts.getStartTime() != null && appts.getEndTime() != null)
-                    result.removeIf(localDateTime -> (localDateTime.isAfter(appts.getStartTime()) && localDateTime.isBefore(appts.getEndTime())));
+                for(Appointment appt : provider.getAppointments()){
+                    result.remove(appt.getStartTime());
+                    if(appt.getStartTime() != null && appt.getEndTime() != null)
+                    result.removeIf(localDateTime -> (localDateTime.isAfter(appt.getStartTime()) && localDateTime.isBefore(appt.getEndTime())));
                 }
                 result.removeIf(localDateTime -> localDateTime.isBefore(LocalDateTime.now()));
                 for(DayOfWeek dow : provider.getDaysOff())
