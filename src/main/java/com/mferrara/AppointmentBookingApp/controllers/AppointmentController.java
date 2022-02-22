@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
@@ -70,7 +71,10 @@ public class AppointmentController {
         else
             year = LocalDateTime.now().getYear();
 
-        for (int day = 1; day <= month.maxLength(); day++) {
+        int monthLength = month.maxLength();
+        if(month == Month.FEBRUARY && !LocalDate.now().isLeapYear())
+            monthLength = 28;
+        for (int day = 1; day <= monthLength; day++) {
             int hour = provider.getStartTime();
             for (int i = 0; i < provider.getHoursOpen(); i++) {
                 for(int j = 0; j < provider.getTimeSlotsPerHour(); j++){
@@ -79,6 +83,8 @@ public class AppointmentController {
                         result.add(dateTime);
                     }
                 }
+//                TODO: make for loops more efficient ?
+
                 for(Appointment appt : provider.getAppointments()){
                     result.remove(appt.getStartTime());
                     if(appt.getStartTime() != null && appt.getEndTime() != null)
